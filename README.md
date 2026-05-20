@@ -254,11 +254,26 @@ docker push your-registry/keda-gpu-scaler:v0.1.0
 
 ---
 
+## Documentation
+
+- **[Design Document](docs/DESIGN.md)** — Architecture decisions, gRPC interface, scaling profiles, testing strategy
+- **[Migration Guide](docs/MIGRATION.md)** — Replace dcgm-exporter + Prometheus with keda-gpu-scaler
+- **[FAQ](docs/FAQ.md)** — Common questions about GPU scaling, MIG, multi-GPU, scale-to-zero
+- **[Changelog](CHANGELOG.md)** — Release history
+
+---
+
 ## Featured In
 
 - **[GPU Autoscaling on Kubernetes with KEDA — Building an External Scaler](https://www.cncf.io/blog/2026/05/27/gpu-autoscaling-on-kubernetes-with-keda-building-an-external-scaler/)** — CNCF Blog (May 2026)
 - **[Abstracting AI Infrastructure: Native GPU Scaling for Internal Developer Platforms](https://platformengineering.com/contributed-content/abstracting-ai-infrastructure-native-gpu-scaling-for-internal-developer-platforms/)** — Platform Engineering (May 2026)
 - **[The Financial Trap of Autonomous Networks: Scaling Agentic AI in the Telecom Core](https://techblog.comsoc.org/2026/03/30/the-financial-trap-of-autonomous-networks-scaling-agentic-ai-in-the-telecom-core/)** — IEEE ComSoc Technology Blog (March 2026)
+
+---
+
+## Adopters
+
+Using keda-gpu-scaler? Add your organization to [ADOPTERS.md](ADOPTERS.md).
 
 ---
 
@@ -275,7 +290,7 @@ docker push your-registry/keda-gpu-scaler:v0.1.0
 
 ## Contributing
 
-Contributions welcome. If you have a GPU autoscaling use case or want to add vendor support (AMD ROCm, Intel), open an issue or PR. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions welcome — GPU autoscaling use cases, vendor support (AMD ROCm, Intel), or docs improvements. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
