@@ -6,7 +6,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/pmady/keda-gpu-scaler)](https://goreportcard.com/report/github.com/pmady/keda-gpu-scaler)
 [![GitHub stars](https://img.shields.io/github/stars/pmady/keda-gpu-scaler?style=social)](https://github.com/pmady/keda-gpu-scaler/stargazers)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/XXXXX/badge)](https://www.bestpractices.dev/projects/XXXXX)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12912/badge)](https://www.bestpractices.dev/en/projects/12912)
 ![KEDA: v2.10+](https://img.shields.io/badge/KEDA-v2.10%2B-orange)
 ![Kubernetes: v1.24+](https://img.shields.io/badge/Kubernetes-v1.24%2B-blue)
 
