@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [v0.2.0] - 2026-05-25
+
+### Added
+
+- GPU collector package tests (`pkg/gpu/collector_test.go`) — MockCollector interface compliance, boundary conditions, empty device handling
+
+### Changed
+
+- Dependabot updates: grpc 1.81.1, zap 1.28.0, golangci-lint-action v9, actions/checkout v6, actions/setup-go v6, docker/login-action v4, docker/build-push-action v7
+
+[v0.2.0]: https://github.com/pmady/keda-gpu-scaler/compare/v0.1.0...v0.2.0
+
 ## [v0.1.0] - 2026-05-19
 
 ### Added
