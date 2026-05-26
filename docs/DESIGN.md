@@ -53,6 +53,7 @@ GPU Node                                    KEDA Operator
 4. KEDA calls `GetMetrics()` over gRPC on the `externalscaler.ExternalScalerServer` interface
 5. The scaler returns the requested metric with the aggregation method specified in the ScaledObject
 6. KEDA feeds the metric value into HPA for a scale up/down/to-zero decision
+7. (Optional) An HTTP `/metrics` endpoint on port 9090 exposes Prometheus gauges for GPU fleet monitoring — independent of the KEDA scaling path
 
 ### gRPC Interface
 
@@ -116,6 +117,7 @@ kubectl get scaledobject -A -o yaml | grep -A5 external
 
 - The DaemonSet needs read-only access to NVIDIA device files — no cluster-wide RBAC
 - The gRPC port (6000) is exposed only as a ClusterIP Service — not reachable outside the cluster
+- The metrics port (9090) is optional and can be disabled entirely with `--metrics-port=0`
 - No secrets or credentials are required
 - NVML calls are read-only (metrics collection, no device configuration)
 

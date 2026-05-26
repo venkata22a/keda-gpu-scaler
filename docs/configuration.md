@@ -85,6 +85,46 @@ triggers:
       activationThreshold: "5"    # scale to zero when GPU util < 5%
 ```
 
+## Server Flags
+
+These flags configure the scaler binary itself (passed via `args` in the DaemonSet or Helm values):
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--port` | gRPC server port | `6000` |
+| `--metrics-port` | Prometheus HTTP metrics port (0 to disable) | `9090` |
+| `--log-level` | Log level: `debug`, `info`, `warn`, `error` | `info` |
+
+### Helm Values
+
+```yaml
+grpc:
+  port: 6000
+
+metrics:
+  enabled: true    # set to false to disable Prometheus endpoint
+  port: 9090
+
+logLevel: info
+```
+
+## Prometheus Metrics
+
+When `--metrics-port` is non-zero, an HTTP server exposes `/metrics` (Prometheus format) and `/healthz`. This is optional and does not affect the KEDA scaling path.
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `keda_gpu_scaler_gpu_utilization_percent` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | GPU compute utilization |
+| `keda_gpu_scaler_gpu_memory_used_bytes` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | GPU memory in use |
+| `keda_gpu_scaler_gpu_memory_total_bytes` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | Total GPU memory |
+| `keda_gpu_scaler_gpu_temperature_celsius` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | GPU temperature |
+| `keda_gpu_scaler_gpu_power_draw_watts` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | GPU power draw |
+| `keda_gpu_scaler_collections_total` | Counter | — | Total NVML collection calls |
+| `keda_gpu_scaler_collection_errors_total` | Counter | — | Failed NVML collections |
+| `keda_gpu_scaler_collection_duration_seconds` | Histogram | — | NVML collection latency |
+| `keda_gpu_scaler_scaler_requests_total` | Counter | `method` | gRPC requests by method |
+| `keda_gpu_scaler_scaler_request_errors_total` | Counter | `method` | gRPC errors by method |
+
 ## Examples
 
 Check `deploy/examples/` for ScaledObject manifests:

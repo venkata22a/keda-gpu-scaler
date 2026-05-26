@@ -1,6 +1,6 @@
 # KEDA GPU Scaler
 
-**Scale Kubernetes GPU workloads from real hardware metrics. No Prometheus. No DCGM. No PromQL.**
+**Scale Kubernetes GPU workloads from real hardware metrics. No DCGM. No PromQL. Optional Prometheus metrics built in.**
 
 [![CI](https://github.com/pmady/keda-gpu-scaler/actions/workflows/ci.yaml/badge.svg)](https://github.com/pmady/keda-gpu-scaler/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pmady/keda-gpu-scaler)](https://goreportcard.com/report/github.com/pmady/keda-gpu-scaler)
@@ -23,7 +23,8 @@ GPU Node                          KEDA Operator
 │                     │           └────────┬─────────┘
 │ NVML: 92% GPU util  │                    │
 │ NVML: 14.2GB VRAM   │           Scale vllm-deployment
-└─────────────────────┘           from 3 → 8 replicas
+│ :9090/metrics (opt) │           from 3 → 8 replicas
+└─────────────────────┘
 ```
 
 ---
@@ -208,6 +209,46 @@ See `deploy/examples/` for ready-to-use ScaledObject manifests.
 
 ---
 
+## Prometheus Metrics (Optional)
+
+The scaler exposes an optional Prometheus-compatible `/metrics` endpoint for monitoring the scaler itself and GPU fleet health. **This is independent of the KEDA scaling path** — scaling works identically with or without it.
+
+### Enable/Disable
+
+```bash
+# Enabled by default on port 9090
+--metrics-port=9090
+
+# Disable entirely (zero overhead)
+--metrics-port=0
+```
+
+Helm:
+```yaml
+metrics:
+  enabled: true   # set to false to disable
+  port: 9090
+```
+
+### Exposed Metrics
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `keda_gpu_scaler_gpu_utilization_percent` | Gauge | GPU compute utilization (per GPU) |
+| `keda_gpu_scaler_gpu_memory_used_bytes` | Gauge | GPU memory in use (per GPU) |
+| `keda_gpu_scaler_gpu_memory_total_bytes` | Gauge | Total GPU memory (per GPU) |
+| `keda_gpu_scaler_gpu_temperature_celsius` | Gauge | GPU temperature (per GPU) |
+| `keda_gpu_scaler_gpu_power_draw_watts` | Gauge | GPU power draw (per GPU) |
+| `keda_gpu_scaler_collections_total` | Counter | Total NVML collection calls |
+| `keda_gpu_scaler_collection_errors_total` | Counter | Failed NVML collection calls |
+| `keda_gpu_scaler_collection_duration_seconds` | Histogram | NVML collection latency |
+| `keda_gpu_scaler_scaler_requests_total` | Counter | gRPC requests by method |
+| `keda_gpu_scaler_scaler_request_errors_total` | Counter | gRPC errors by method |
+
+All per-GPU metrics are labeled with `gpu_index`, `gpu_uuid`, and `gpu_name`.
+
+---
+
 ## Build it Yourself
 
 This project requires `CGO_ENABLED=1` to compile the NVIDIA C-bindings.
@@ -245,7 +286,7 @@ docker push your-registry/keda-gpu-scaler:v0.1.0
 
 | | keda-gpu-scaler | dcgm-exporter + Prometheus | Custom Metrics API |
 |---|---|---|---|
-| **Components** | 1 DaemonSet | dcgm-exporter + Prometheus + adapter | Custom metrics server |
+| **Components** | 1 DaemonSet (+ optional /metrics) | dcgm-exporter + Prometheus + adapter | Custom metrics server |
 | **Metric latency** | Sub-second (direct NVML) | 15-30s (scrape interval) | Depends on implementation |
 | **Scale-to-zero** | Yes (KEDA native) | Yes (with KEDA Prometheus scaler) | Manual |
 | **Configuration** | 3-line ScaledObject | PromQL query per metric | Custom code |
@@ -284,7 +325,7 @@ Using keda-gpu-scaler? Add your organization to [ADOPTERS.md](ADOPTERS.md).
 - [ ] Multi-Instance GPU (MIG) per-instance metrics
 - [ ] PCIe bandwidth and NVLink utilization metrics
 - [ ] Inference-framework-aware scaling (vLLM queue depth via engine API)
-- [ ] Grafana dashboard for GPU fleet visibility
+- [ ] Grafana dashboard for GPU fleet visibility (Prometheus metrics endpoint now available)
 - [ ] OCI/OKE optimized deployment guide
 
 ---

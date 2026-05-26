@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- Optional Prometheus metrics endpoint (`--metrics-port=9090`, set to 0 to disable)
+- Per-GPU Prometheus gauges: utilization, memory, temperature, power draw
+- Scaler operational metrics: collection counters, duration histogram, gRPC request counters
+- `InstrumentedCollector` wrapper for transparent metrics collection
+- `/healthz` HTTP health check endpoint (when metrics enabled)
+- Helm values: `metrics.enabled` and `metrics.port`
+- Unit tests for `pkg/metrics` package
+
 ## [v0.2.0] - 2026-05-25
 
 ### Added
