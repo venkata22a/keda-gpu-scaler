@@ -4,7 +4,9 @@
 
 [![CI](https://github.com/pmady/keda-gpu-scaler/actions/workflows/ci.yaml/badge.svg)](https://github.com/pmady/keda-gpu-scaler/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pmady/keda-gpu-scaler)](https://goreportcard.com/report/github.com/pmady/keda-gpu-scaler)
-[![GitHub stars](https://img.shields.io/github/stars/pmady/keda-gpu-scaler?style=social)](https://github.com/pmady/keda-gpu-scaler/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/pmady/keda-gpu-scaler?style=for-the-badge&logo=github)](https://github.com/pmady/keda-gpu-scaler/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/pmady/keda-gpu-scaler?style=for-the-badge&logo=github)](https://github.com/pmady/keda-gpu-scaler/network/members)
+[![Contributors](https://img.shields.io/github/contributors/pmady/keda-gpu-scaler?style=for-the-badge&logo=github)](https://github.com/pmady/keda-gpu-scaler/graphs/contributors)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12912/badge)](https://www.bestpractices.dev/en/projects/12912)
 [![Documentation](https://readthedocs.org/projects/keda-gpu-scaler/badge/?version=latest)](https://keda-gpu-scaler.readthedocs.io/en/latest/)
