@@ -37,12 +37,14 @@ import (
 	pb "github.com/pmady/keda-gpu-scaler/pkg/externalscaler"
 	"github.com/pmady/keda-gpu-scaler/pkg/gpu"
 	"github.com/pmady/keda-gpu-scaler/pkg/metrics"
+	"github.com/pmady/keda-gpu-scaler/pkg/probes"
 	"github.com/pmady/keda-gpu-scaler/pkg/scaler"
 )
 
 var (
 	port        = flag.Int("port", 6000, "gRPC server port")
 	metricsPort = flag.Int("metrics-port", 9090, "Prometheus metrics HTTP port (0 to disable)")
+	probePort   = flag.Int("probe-port", 8081, "Health/readiness HTTP port (0 to disable)")
 	logLevel    = flag.String("log-level", "info", "Log level (debug, info, warn, error)")
 )
 
@@ -55,8 +57,22 @@ func main() {
 	logger.Info("Starting keda-gpu-scaler",
 		zap.Int("port", *port),
 		zap.Int("metricsPort", *metricsPort),
+		zap.Int("probePort", *probePort),
 		zap.String("logLevel", *logLevel),
 	)
+
+	var probeState probes.State
+	if *probePort > 0 {
+		probeAddr := fmt.Sprintf(":%d", *probePort)
+		go func() {
+			logger.Info("Probe server listening", zap.String("address", probeAddr))
+			if err := http.ListenAndServe(probeAddr, probes.Handler(&probeState)); err != nil && err != http.ErrServerClosed {
+				logger.Fatal("Probe server failed", zap.Error(err))
+			}
+		}()
+	} else {
+		logger.Info("Probe server disabled (probe-port=0)")
+	}
 
 	// Initialize NVML GPU collector
 	collector, err := gpu.NewCollector(logger)
@@ -77,9 +93,6 @@ func main() {
 
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", promhttp.Handler())
-		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})
 		metricsAddr := fmt.Sprintf(":%d", *metricsPort)
 		go func() {
 			logger.Info("Prometheus metrics server listening", zap.String("address", metricsAddr))
@@ -112,6 +125,7 @@ func main() {
 				zap.Uint64("memTotalMiB", m.MemoryTotalMiB),
 			)
 		}
+		probeState.MarkReady()
 	}
 
 	// Start gRPC server

@@ -249,6 +249,24 @@ metrics:
 
 All per-GPU metrics are labeled with `gpu_index`, `gpu_uuid`, and `gpu_name`.
 
+## Kubernetes Probes
+
+The scaler exposes liveness and readiness endpoints on a dedicated probe port:
+
+- `/healthz` returns `200` while the process is alive.
+- `/readyz` returns `200` after NVML initializes and the first metrics collection succeeds.
+
+```bash
+--probe-port=8081
+```
+
+Helm:
+```yaml
+probes:
+  enabled: true
+  port: 8081
+```
+
 ---
 
 ## Build it Yourself

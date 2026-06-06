@@ -93,6 +93,7 @@ These flags configure the scaler binary itself (passed via `args` in the DaemonS
 |------|-------------|---------|
 | `--port` | gRPC server port | `6000` |
 | `--metrics-port` | Prometheus HTTP metrics port (0 to disable) | `9090` |
+| `--probe-port` | Liveness/readiness HTTP probe port (0 to disable) | `8081` |
 | `--log-level` | Log level: `debug`, `info`, `warn`, `error` | `info` |
 
 ### Helm Values
@@ -105,12 +106,16 @@ metrics:
   enabled: true    # set to false to disable Prometheus endpoint
   port: 9090
 
+probes:
+  enabled: true
+  port: 8081
+
 logLevel: info
 ```
 
 ## Prometheus Metrics
 
-When `--metrics-port` is non-zero, an HTTP server exposes `/metrics` (Prometheus format) and `/healthz`. This is optional and does not affect the KEDA scaling path.
+When `--metrics-port` is non-zero, an HTTP server exposes `/metrics` in Prometheus format. This is optional and does not affect the KEDA scaling path.
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
@@ -124,6 +129,13 @@ When `--metrics-port` is non-zero, an HTTP server exposes `/metrics` (Prometheus
 | `keda_gpu_scaler_collection_duration_seconds` | Histogram | — | NVML collection latency |
 | `keda_gpu_scaler_scaler_requests_total` | Counter | `method` | gRPC requests by method |
 | `keda_gpu_scaler_scaler_request_errors_total` | Counter | `method` | gRPC errors by method |
+
+## Kubernetes Probes
+
+When `--probe-port` is non-zero, an HTTP server exposes:
+
+- `/healthz` — returns 200 while the scaler process is alive.
+- `/readyz` — returns 200 after NVML initializes and the first metrics collection succeeds.
 
 ## Examples
 

@@ -28,6 +28,10 @@ metrics:
   enabled: true
   port: 9090
 
+probes:
+  enabled: true
+  port: 8081
+
 nodeSelector:
   nvidia.com/gpu.present: "true"
 
