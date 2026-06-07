@@ -40,6 +40,11 @@ spec:
             {{- else }}
             - --metrics-port=0
             {{- end }}
+            {{- if .Values.probes.enabled }}
+            - --probe-port={{ .Values.probes.port }}
+            {{- else }}
+            - --probe-port=0
+            {{- end }}
           ports:
             - name: grpc
               containerPort: {{ .Values.grpc.port }}
@@ -49,18 +54,27 @@ spec:
               containerPort: {{ .Values.metrics.port }}
               protocol: TCP
             {{- end }}
+            {{- if .Values.probes.enabled }}
+            - name: probes
+              containerPort: {{ .Values.probes.port }}
+              protocol: TCP
+            {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.probes.enabled }}
           livenessProbe:
-            grpc:
-              port: {{ .Values.grpc.port }}
+            httpGet:
+              path: /healthz
+              port: probes
             initialDelaySeconds: 10
             periodSeconds: 30
           readinessProbe:
-            grpc:
-              port: {{ .Values.grpc.port }}
+            httpGet:
+              path: /readyz
+              port: probes
             initialDelaySeconds: 5
             periodSeconds: 10
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- if .Values.nvmlHostMounts.enabled }}
