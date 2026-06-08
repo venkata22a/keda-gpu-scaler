@@ -7,7 +7,7 @@ Everything goes in the ScaledObject trigger `metadata`. No config files or extra
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `profile` | Pre-built scaling profile name | (none) |
-| `metricType` | GPU metric to scale on | `gpu_utilization` |
+| `metricType` | GPU metric to scale on (see table below) | `gpu_utilization` |
 | `targetValue` | Target metric value for scaling | `80` |
 | `targetGpuUtilization` | Shorthand for GPU utilization target | (none) |
 | `targetMemoryUtilization` | Shorthand for VRAM utilization target | (none) |
@@ -15,6 +15,21 @@ Everything goes in the ScaledObject trigger `metadata`. No config files or extra
 | `gpuIndex` | Specific GPU index to monitor | `-1` (all GPUs) |
 | `aggregation` | Multi-GPU aggregation: `max`, `min`, `avg`, `sum` | `max` |
 | `pollIntervalSeconds` | Metric polling interval | `10` |
+
+### Supported metricType values
+
+| metricType | Unit | Description |
+|------------|------|-------------|
+| `gpu_utilization` | % | GPU compute utilization |
+| `memory_utilization` | % | VRAM utilization reported by NVML |
+| `memory_used_mib` | MiB | Raw VRAM usage |
+| `memory_used_percent` | % | VRAM used as a percentage of total |
+| `temperature` | °C | GPU die temperature |
+| `power_draw` | W | GPU power consumption |
+| `pcie_tx_kbps` | KB/s | PCIe transmit throughput (CPU→GPU) |
+| `pcie_rx_kbps` | KB/s | PCIe receive throughput (GPU→CPU) |
+| `nvlink_tx_mbps` | MB/s | Aggregate NVLink transmit throughput across all active links |
+| `nvlink_rx_mbps` | MB/s | Aggregate NVLink receive throughput across all active links |
 
 ## Scaling Profiles
 
@@ -26,6 +41,7 @@ Profiles bundle defaults for common workloads. Override any parameter in the tri
 | `triton-inference` | GPU Util | 75 | 10 | NVIDIA Triton Inference Server |
 | `training` | GPU Util | 90 | 0 | Training jobs (no scale-to-zero) |
 | `batch` | Memory % | 70 | 1 | Batch inference with aggressive scale-down |
+| `distributed-training` | NVLink TX MB/s | 800 | 100 | Data-parallel training on NVLink systems |
 
 ### Using a profile
 
@@ -61,6 +77,43 @@ triggers:
       gpuIndex: "0"
       aggregation: "max"
 ```
+
+## PCIe and NVLink Bandwidth Metrics
+
+In data-parallel training (PyTorch DDP, DeepSpeed), GPUs constantly sync gradients via AllReduce. When communication bandwidth saturates, GPU compute utilization can appear low (40–60%) while the workload is actually fully bottlenecked. Standard GPU utilization metrics won't trigger scaling in this case — bandwidth metrics will.
+
+### When to use PCIe metrics
+
+Use `pcie_tx_kbps` / `pcie_rx_kbps` on nodes **without NVLink** (e.g. T4, A10, consumer-grade GPUs). On these systems all inter-GPU communication flows through the CPU over the PCIe bus (~32 GB/s). When PCIe saturates, adding replicas or reducing batch size helps more than waiting for GPU util to climb.
+
+```yaml
+triggers:
+  - type: external
+    metadata:
+      scalerAddress: "keda-gpu-scaler.keda.svc.cluster.local:6000"
+      metricType: "pcie_tx_kbps"
+      targetValue: "28000"        # ~28 GB/s — near PCIe Gen4 x16 limit
+      activationThreshold: "1000"
+      aggregation: "max"
+```
+
+### When to use NVLink metrics
+
+Use `nvlink_tx_mbps` / `nvlink_rx_mbps` on **NVSwitch / DGX / HGX** systems where GPUs communicate directly without the CPU (A100: ~600 GB/s aggregate, H100: ~900 GB/s). NVLink saturation indicates the model's communication pattern has outgrown the node — a signal to scale out or adjust parallelism strategy. The `distributed-training` profile uses NVLink TX with sane defaults for A100 systems.
+
+```yaml
+triggers:
+  - type: external
+    metadata:
+      scalerAddress: "keda-gpu-scaler.keda.svc.cluster.local:6000"
+      profile: "distributed-training"
+      targetValue: "800"          # MB/s — tune to your hardware
+      activationThreshold: "100"
+```
+
+### NVLink availability
+
+On hardware without NVLink (T4, A10, etc.) the NVLink metrics are always `0`. If you configure a ScaledObject with an NVLink metric type on non-NVLink hardware, KEDA will see `0` and scale to zero if `activationThreshold > 0`. Use PCIe metrics on those nodes instead.
 
 ## Multi-GPU Aggregation
 
@@ -124,6 +177,9 @@ When `--metrics-port` is non-zero, an HTTP server exposes `/metrics` in Promethe
 | `keda_gpu_scaler_gpu_memory_total_bytes` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | Total GPU memory |
 | `keda_gpu_scaler_gpu_temperature_celsius` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | GPU temperature |
 | `keda_gpu_scaler_gpu_power_draw_watts` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name` | GPU power draw |
+| `keda_gpu_scaler_gpu_pcie_throughput_kbps` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name`, `direction` | PCIe throughput in KB/s — `direction`: `tx` or `rx` |
+| `keda_gpu_scaler_gpu_nvlink_throughput_mbps` | Gauge | `gpu_index`, `gpu_uuid`, `gpu_name`, `direction` | Aggregate NVLink throughput in MB/s — `direction`: `tx` or `rx` |
+| `keda_gpu_scaler_gpu_device_count` | Gauge | — | Number of GPU devices detected on this node |
 | `keda_gpu_scaler_collections_total` | Counter | — | Total NVML collection calls |
 | `keda_gpu_scaler_collection_errors_total` | Counter | — | Failed NVML collections |
 | `keda_gpu_scaler_collection_duration_seconds` | Histogram | — | NVML collection latency |
