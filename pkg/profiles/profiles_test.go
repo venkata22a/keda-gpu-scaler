@@ -57,6 +57,13 @@ func TestGetBuiltinProfiles(t *testing.T) {
 			wantTarget: 70,
 		},
 		{
+			name:       "distributed-training exists",
+			profile:    "distributed-training",
+			wantFound:  true,
+			wantMetric: MetricNVLinkTxMBps,
+			wantTarget: 800,
+		},
+		{
 			name:      "unknown profile not found",
 			profile:   "nonexistent",
 			wantFound: false,
@@ -91,15 +98,16 @@ func TestGetBuiltinProfiles(t *testing.T) {
 
 func TestList(t *testing.T) {
 	names := List()
-	if len(names) != 4 {
-		t.Errorf("List() returned %d profiles, want 4", len(names))
+	if len(names) != 5 {
+		t.Errorf("List() returned %d profiles, want 5", len(names))
 	}
 
 	expected := map[string]bool{
-		"vllm-inference":   false,
-		"triton-inference": false,
-		"training":         false,
-		"batch":            false,
+		"vllm-inference":       false,
+		"triton-inference":     false,
+		"training":             false,
+		"batch":                false,
+		"distributed-training": false,
 	}
 	for _, name := range names {
 		if _, ok := expected[name]; !ok {

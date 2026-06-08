@@ -283,6 +283,14 @@ func extractMetric(m gpu.Metrics, metricType profiles.MetricType) float64 {
 		return float64(m.TemperatureCelsius)
 	case profiles.MetricPowerDraw:
 		return float64(m.PowerDrawWatts)
+	case profiles.MetricPCIeTxKBps:
+		return float64(m.PCIeTxKBps)
+	case profiles.MetricPCIeRxKBps:
+		return float64(m.PCIeRxKBps)
+	case profiles.MetricNVLinkTxMBps:
+		return float64(m.NVLinkTxMBps)
+	case profiles.MetricNVLinkRxMBps:
+		return float64(m.NVLinkRxMBps)
 	default:
 		return float64(m.GPUUtilization)
 	}

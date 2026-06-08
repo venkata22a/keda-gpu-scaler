@@ -81,4 +81,8 @@ func recordGauges(m gpu.Metrics) {
 	GPUMemoryTotalBytes.WithLabelValues(idx, m.UUID, m.Name).Set(float64(m.MemoryTotalMiB) * 1024 * 1024)
 	GPUTemperature.WithLabelValues(idx, m.UUID, m.Name).Set(float64(m.TemperatureCelsius))
 	GPUPowerDraw.WithLabelValues(idx, m.UUID, m.Name).Set(float64(m.PowerDrawWatts))
+	PCIeThroughput.WithLabelValues(idx, m.UUID, m.Name, "tx").Set(float64(m.PCIeTxKBps))
+	PCIeThroughput.WithLabelValues(idx, m.UUID, m.Name, "rx").Set(float64(m.PCIeRxKBps))
+	NVLinkThroughput.WithLabelValues(idx, m.UUID, m.Name, "tx").Set(float64(m.NVLinkTxMBps))
+	NVLinkThroughput.WithLabelValues(idx, m.UUID, m.Name, "rx").Set(float64(m.NVLinkRxMBps))
 }

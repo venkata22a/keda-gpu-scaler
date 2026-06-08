@@ -6,3 +6,6 @@ bin/
 .DS_Store
 vendor/
 promotion/
+dev-server/
+Dockerfile.dev
+terraform/

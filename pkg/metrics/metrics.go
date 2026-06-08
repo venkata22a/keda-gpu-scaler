@@ -72,6 +72,18 @@ var (
 		Help:      "GPU power draw in watts.",
 	}, []string{"gpu_index", "gpu_uuid", "gpu_name"})
 
+	PCIeThroughput = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "gpu_pcie_throughput_kbps",
+		Help:      "PCIe throughput in KB/s sampled over the last ~20ms window.",
+	}, []string{"gpu_index", "gpu_uuid", "gpu_name", "direction"}) // direction: tx | rx
+
+	NVLinkThroughput = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "gpu_nvlink_throughput_mbps",
+		Help:      "Aggregate NVLink throughput in MB/s across all active links on this device.",
+	}, []string{"gpu_index", "gpu_uuid", "gpu_name", "direction"}) // direction: tx | rx
+
 	ScalerRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      "scaler_requests_total",
@@ -95,6 +107,8 @@ func Register(reg prometheus.Registerer) {
 		GPUMemoryTotalBytes,
 		GPUTemperature,
 		GPUPowerDraw,
+		PCIeThroughput,
+		NVLinkThroughput,
 		ScalerRequestsTotal,
 		ScalerRequestErrors,
 	)

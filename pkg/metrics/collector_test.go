@@ -38,6 +38,10 @@ var testDevices = []gpu.Metrics{
 		TemperatureCelsius: 72,
 		PowerDrawWatts:     300,
 		PowerLimitWatts:    400,
+		PCIeTxKBps:         8000,
+		PCIeRxKBps:         4000,
+		NVLinkTxMBps:       600,
+		NVLinkRxMBps:       500,
 	},
 	{
 		Index:              1,
@@ -50,6 +54,10 @@ var testDevices = []gpu.Metrics{
 		TemperatureCelsius: 38,
 		PowerDrawWatts:     75,
 		PowerLimitWatts:    400,
+		PCIeTxKBps:         2000,
+		PCIeRxKBps:         1000,
+		NVLinkTxMBps:       200,
+		NVLinkRxMBps:       150,
 	},
 }
 
@@ -165,6 +173,60 @@ func TestClosePassthrough(t *testing.T) {
 	}
 }
 
+func TestCollectAllRecordsPCIeGauges(t *testing.T) {
+	ic, _ := setup(t)
+
+	_, err := ic.CollectAll()
+	if err != nil {
+		t.Fatalf("CollectAll() error = %v", err)
+	}
+
+	// GPU 0 PCIe TX
+	got := testutil.ToFloat64(PCIeThroughput.WithLabelValues("0", "GPU-aaaa-1111", "NVIDIA A100-SXM4-80GB", "tx"))
+	if got != 8000 {
+		t.Errorf("PCIe TX GPU0 = %v, want 8000", got)
+	}
+
+	// GPU 0 PCIe RX
+	got = testutil.ToFloat64(PCIeThroughput.WithLabelValues("0", "GPU-aaaa-1111", "NVIDIA A100-SXM4-80GB", "rx"))
+	if got != 4000 {
+		t.Errorf("PCIe RX GPU0 = %v, want 4000", got)
+	}
+
+	// GPU 1 PCIe TX
+	got = testutil.ToFloat64(PCIeThroughput.WithLabelValues("1", "GPU-bbbb-2222", "NVIDIA A100-SXM4-80GB", "tx"))
+	if got != 2000 {
+		t.Errorf("PCIe TX GPU1 = %v, want 2000", got)
+	}
+}
+
+func TestCollectAllRecordsNVLinkGauges(t *testing.T) {
+	ic, _ := setup(t)
+
+	_, err := ic.CollectAll()
+	if err != nil {
+		t.Fatalf("CollectAll() error = %v", err)
+	}
+
+	// GPU 0 NVLink TX
+	got := testutil.ToFloat64(NVLinkThroughput.WithLabelValues("0", "GPU-aaaa-1111", "NVIDIA A100-SXM4-80GB", "tx"))
+	if got != 600 {
+		t.Errorf("NVLink TX GPU0 = %v, want 600", got)
+	}
+
+	// GPU 0 NVLink RX
+	got = testutil.ToFloat64(NVLinkThroughput.WithLabelValues("0", "GPU-aaaa-1111", "NVIDIA A100-SXM4-80GB", "rx"))
+	if got != 500 {
+		t.Errorf("NVLink RX GPU0 = %v, want 500", got)
+	}
+
+	// GPU 1 NVLink TX
+	got = testutil.ToFloat64(NVLinkThroughput.WithLabelValues("1", "GPU-bbbb-2222", "NVIDIA A100-SXM4-80GB", "tx"))
+	if got != 200 {
+		t.Errorf("NVLink TX GPU1 = %v, want 200", got)
+	}
+}
+
 func TestImplementsInterface(t *testing.T) {
 	var _ gpu.MetricsCollector = (*InstrumentedCollector)(nil)
 }
@@ -182,6 +244,8 @@ func TestMetricsRegistered(t *testing.T) {
 		"keda_gpu_scaler_collections_total",
 		"keda_gpu_scaler_collection_errors_total",
 		"keda_gpu_scaler_collection_duration_seconds",
+		"keda_gpu_scaler_gpu_pcie_throughput_kbps",
+		"keda_gpu_scaler_gpu_nvlink_throughput_mbps",
 		"keda_gpu_scaler_scaler_requests_total",
 		"keda_gpu_scaler_scaler_request_errors_total",
 	}

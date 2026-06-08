@@ -297,8 +297,8 @@ func newTestScaler(devices []gpu.Metrics) *GPUExternalScaler {
 }
 
 var testDevices = []gpu.Metrics{
-	{Index: 0, UUID: "GPU-0", Name: "A100", GPUUtilization: 80, MemoryUtilization: 60, MemoryUsedMiB: 40960, MemoryTotalMiB: 81920, TemperatureCelsius: 65, PowerDrawWatts: 250, PowerLimitWatts: 400},
-	{Index: 1, UUID: "GPU-1", Name: "A100", GPUUtilization: 30, MemoryUtilization: 20, MemoryUsedMiB: 16384, MemoryTotalMiB: 81920, TemperatureCelsius: 45, PowerDrawWatts: 100, PowerLimitWatts: 400},
+	{Index: 0, UUID: "GPU-0", Name: "A100", GPUUtilization: 80, MemoryUtilization: 60, MemoryUsedMiB: 40960, MemoryTotalMiB: 81920, TemperatureCelsius: 65, PowerDrawWatts: 250, PowerLimitWatts: 400, PCIeTxKBps: 8000, PCIeRxKBps: 4000, NVLinkTxMBps: 600, NVLinkRxMBps: 500},
+	{Index: 1, UUID: "GPU-1", Name: "A100", GPUUtilization: 30, MemoryUtilization: 20, MemoryUsedMiB: 16384, MemoryTotalMiB: 81920, TemperatureCelsius: 45, PowerDrawWatts: 100, PowerLimitWatts: 400, PCIeTxKBps: 2000, PCIeRxKBps: 1000, NVLinkTxMBps: 200, NVLinkRxMBps: 150},
 }
 
 func TestIsActive(t *testing.T) {
@@ -447,6 +447,36 @@ func TestGetMetrics(t *testing.T) {
 			metadata: map[string]string{"metricType": "power_draw", "aggregation": "sum"},
 			want:     350, // 250+100
 		},
+		{
+			name:     "pcie tx max across GPUs",
+			metadata: map[string]string{"metricType": "pcie_tx_kbps", "aggregation": "max"},
+			want:     8000, // max(8000, 2000)
+		},
+		{
+			name:     "pcie rx sum across GPUs",
+			metadata: map[string]string{"metricType": "pcie_rx_kbps", "aggregation": "sum"},
+			want:     5000, // 4000+1000
+		},
+		{
+			name:     "nvlink tx max across GPUs",
+			metadata: map[string]string{"metricType": "nvlink_tx_mbps", "aggregation": "max"},
+			want:     600, // max(600, 200)
+		},
+		{
+			name:     "nvlink rx avg across GPUs",
+			metadata: map[string]string{"metricType": "nvlink_rx_mbps", "aggregation": "avg"},
+			want:     325, // (500+150)/2
+		},
+		{
+			name:     "single GPU pcie tx",
+			metadata: map[string]string{"gpuIndex": "0", "metricType": "pcie_tx_kbps"},
+			want:     8000,
+		},
+		{
+			name:     "single GPU nvlink tx",
+			metadata: map[string]string{"gpuIndex": "1", "metricType": "nvlink_tx_mbps"},
+			want:     200,
+		},
 	}
 
 	for _, tt := range tests {
@@ -467,6 +497,60 @@ func TestGetMetrics(t *testing.T) {
 				t.Errorf("MetricValueFloat = %v, want %v", resp.MetricValues[0].MetricValueFloat, tt.want)
 			}
 		})
+	}
+}
+
+func TestExtractMetricPCIeNVLink(t *testing.T) {
+	m := gpu.Metrics{
+		PCIeTxKBps:   8000,
+		PCIeRxKBps:   4000,
+		NVLinkTxMBps: 600,
+		NVLinkRxMBps: 500,
+	}
+
+	tests := []struct {
+		metricType profiles.MetricType
+		want       float64
+	}{
+		{profiles.MetricPCIeTxKBps, 8000},
+		{profiles.MetricPCIeRxKBps, 4000},
+		{profiles.MetricNVLinkTxMBps, 600},
+		{profiles.MetricNVLinkRxMBps, 500},
+	}
+
+	for _, tt := range tests {
+		got := extractMetric(m, tt.metricType)
+		if got != tt.want {
+			t.Errorf("extractMetric(%v) = %v, want %v", tt.metricType, got, tt.want)
+		}
+	}
+}
+
+func TestDistributedTrainingProfile(t *testing.T) {
+	s := newTestScaler(testDevices)
+
+	// distributed-training profile should scale on NVLink TX, target 800 MB/s
+	resp, err := s.GetMetricSpec(context.Background(), &pb.ScaledObjectRef{
+		Name:           "test-so",
+		ScalerMetadata: map[string]string{"profile": "distributed-training"},
+	})
+	if err != nil {
+		t.Fatalf("GetMetricSpec() error = %v", err)
+	}
+	if resp.MetricSpecs[0].TargetSizeFloat != 800 {
+		t.Errorf("target = %v, want 800", resp.MetricSpecs[0].TargetSizeFloat)
+	}
+
+	// IsActive should be true when NVLink TX (max=600) > activationThreshold (100)
+	active, err := s.IsActive(context.Background(), &pb.ScaledObjectRef{
+		Name:           "test-so",
+		ScalerMetadata: map[string]string{"profile": "distributed-training"},
+	})
+	if err != nil {
+		t.Fatalf("IsActive() error = %v", err)
+	}
+	if !active.Result {
+		t.Error("IsActive() = false, want true (NVLink TX 600 > activation 100)")
 	}
 }
 

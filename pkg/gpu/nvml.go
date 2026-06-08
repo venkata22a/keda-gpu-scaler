@@ -24,6 +24,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// maxNVLinks is the maximum number of NVLink connections per GPU (H100 upper bound).
+const maxNVLinks = 18
+
 // Metrics holds a snapshot of GPU metrics for a single device.
 type Metrics struct {
 	Index              int
@@ -36,6 +39,12 @@ type Metrics struct {
 	TemperatureCelsius uint32
 	PowerDrawWatts     uint32
 	PowerLimitWatts    uint32
+	// PCIe throughput — sampled by NVML over a ~20ms window.
+	PCIeTxKBps uint32
+	PCIeRxKBps uint32
+	// NVLink throughput — aggregate across all active links on this device.
+	NVLinkTxMBps uint64
+	NVLinkRxMBps uint64
 }
 
 // Collector wraps NVML to collect GPU metrics.
@@ -150,6 +159,39 @@ func (c *Collector) collectDevice(index int) (Metrics, error) {
 	if ret == nvml.SUCCESS {
 		m.PowerLimitWatts = powerLimit / 1000
 	}
+
+	// PCIe throughput — KB/s over the last ~20ms NVML sampling window.
+	if tx, ret := device.GetPcieThroughput(nvml.PCIE_UTIL_TX_BYTES); ret == nvml.SUCCESS {
+		m.PCIeTxKBps = tx
+	}
+	if rx, ret := device.GetPcieThroughput(nvml.PCIE_UTIL_RX_BYTES); ret == nvml.SUCCESS {
+		m.PCIeRxKBps = rx
+	}
+
+	// NVLink throughput — iterate all possible links and aggregate active ones.
+	// On hardware without NVLink (e.g. T4, A10), every link returns an error
+	// and is skipped, leaving NVLinkTxMBps/NVLinkRxMBps as 0.
+	// A warning is logged so operators know NVLink is unavailable rather than
+	// silently getting 0s that could trigger unexpected scale-to-zero.
+	var nvlinkTxKBps, nvlinkRxKBps uint64
+	activeLinks := 0
+	for link := 0; link < maxNVLinks; link++ {
+		tx, rx, ret := nvml.DeviceGetNvLinkUtilizationCounter(device, link, 0)
+		if ret != nvml.SUCCESS {
+			continue
+		}
+		nvlinkTxKBps += tx
+		nvlinkRxKBps += rx
+		activeLinks++
+	}
+	if activeLinks == 0 {
+		c.logger.Debug("no NVLink connections found on device — NVLink metrics will be 0 (normal for non-NVLink hardware like T4/A10)",
+			zap.Int("gpuIndex", index),
+			zap.String("gpu", m.Name),
+		)
+	}
+	m.NVLinkTxMBps = nvlinkTxKBps / 1024
+	m.NVLinkRxMBps = nvlinkRxKBps / 1024
 
 	return m, nil
 }
