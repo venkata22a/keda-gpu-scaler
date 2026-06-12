@@ -99,6 +99,10 @@ This design is documented in [KEDA issue #7538](https://github.com/kedacore/keda
 | `memory_used_percent` | GPU VRAM used as percentage of total | % (0-100) |
 | `temperature` | GPU die temperature | Celsius |
 | `power_draw` | GPU power consumption | Watts |
+| `pcie_tx_kbps` | PCIe transmit throughput (CPU→GPU) | KB/s |
+| `pcie_rx_kbps` | PCIe receive throughput (GPU→CPU) | KB/s |
+| `nvlink_tx_mbps` | NVLink transmit throughput (GPU→GPU) | MB/s |
+| `nvlink_rx_mbps` | NVLink receive throughput (GPU→GPU) | MB/s |
 
 ---
 
@@ -112,6 +116,7 @@ Instead of configuring raw metric thresholds, use a profile optimized for your w
 | `triton-inference` | GPU Util | 75 | 10 | NVIDIA Triton Inference Server |
 | `training` | GPU Util | 90 | 0 | Training jobs (no scale-to-zero) |
 | `batch` | Memory % | 70 | 1 | Batch inference with aggressive scale-down |
+| `distributed-training` | NVLink TX | 800 | 100 | Data-parallel training on NVLink systems |
 
 ---
 
@@ -274,8 +279,14 @@ probes:
 This project requires `CGO_ENABLED=1` to compile the NVIDIA C-bindings.
 
 ```bash
-# Build binary (requires CGO for NVML)
+# Build KEDA scaler binary (requires CGO for NVML)
 make build
+
+# Build standalone GPU metrics CLI (no KEDA/gRPC needed)
+make build-metrics
+
+# Build all binaries
+make build-all
 
 # Run unit tests
 make test
@@ -291,6 +302,18 @@ make docker-release VERSION=v0.1.0
 
 # Deploy to cluster
 make deploy
+```
+
+### Standalone GPU Metrics CLI
+
+Collect GPU metrics without Kubernetes — works on bare metal, SLURM jobs, Singularity containers.
+
+```bash
+gpu-metrics                       # one-shot table output
+gpu-metrics --format json         # JSON for scripting
+gpu-metrics --format csv          # CSV for analysis
+gpu-metrics --interval 5s         # continuous collection
+gpu-metrics --device 0 --quiet    # single GPU, no logs
 ```
 
 Or build the Docker image directly:
@@ -310,7 +333,7 @@ docker push your-registry/keda-gpu-scaler:v0.1.0
 | **Metric latency** | Sub-second (direct NVML) | 15-30s (scrape interval) | Depends on implementation |
 | **Scale-to-zero** | Yes (KEDA native) | Yes (with KEDA Prometheus scaler) | Manual |
 | **Configuration** | 3-line ScaledObject | PromQL query per metric | Custom code |
-| **GPU metrics** | 6 hardware metrics | 50+ DCGM metrics | Whatever you build |
+| **GPU metrics** | 10 hardware metrics | 50+ DCGM metrics | Whatever you build |
 | **Dependencies** | KEDA, NVIDIA drivers | KEDA, Prometheus, dcgm-exporter | Varies |
 | **Failure domain** | Node-local | Centralized Prometheus | Varies |
 
@@ -341,12 +364,26 @@ Using keda-gpu-scaler? Add your organization to [ADOPTERS.md](ADOPTERS.md).
 
 ## Roadmap
 
+### Completed (v0.4.0)
+
+- [x] PCIe bandwidth and NVLink utilization metrics
+- [x] HTTP health probes (`/healthz`, `/readyz`)
+- [x] Standalone `gpu-metrics` CLI for non-Kubernetes environments
+
+### In Progress (v0.5.0)
+
+- [ ] SLURM workload manager integration ([#52](https://github.com/pmady/keda-gpu-scaler/issues/52))
+- [ ] Flux workload manager integration ([#53](https://github.com/pmady/keda-gpu-scaler/issues/53))
+- [ ] Cross-environment GPU metrics parity — K8s, SLURM, Flux ([#54](https://github.com/pmady/keda-gpu-scaler/issues/54))
+- [ ] NVIDIA collaboration for cross-platform metrics
+
+### Future
+
 - [ ] AMD ROCm support via `rocm-smi` bindings
 - [ ] Multi-Instance GPU (MIG) per-instance metrics
-- [ ] PCIe bandwidth and NVLink utilization metrics
 - [ ] Inference-framework-aware scaling (vLLM queue depth via engine API)
-- [ ] Grafana dashboard for GPU fleet visibility (Prometheus metrics endpoint now available)
-- [ ] OCI/OKE optimized deployment guide
+- [ ] Grafana dashboard for GPU fleet visibility
+- [ ] Singularity/Podman container support for HPC
 
 ---
 
