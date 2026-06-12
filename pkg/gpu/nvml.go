@@ -1,3 +1,5 @@
+//go:build !mock
+
 /*
 Copyright 2026 The keda-gpu-scaler Authors.
 
@@ -27,33 +29,15 @@ import (
 // maxNVLinks is the maximum number of NVLink connections per GPU (H100 upper bound).
 const maxNVLinks = 18
 
-// Metrics holds a snapshot of GPU metrics for a single device.
-type Metrics struct {
-	Index              int
-	UUID               string
-	Name               string
-	GPUUtilization     uint32 // percentage 0-100
-	MemoryUtilization  uint32 // percentage 0-100
-	MemoryUsedMiB      uint64
-	MemoryTotalMiB     uint64
-	TemperatureCelsius uint32
-	PowerDrawWatts     uint32
-	PowerLimitWatts    uint32
-	// PCIe throughput
-	PCIeTxKBps uint32
-	PCIeRxKBps uint32
-	// NVLink throughput
-	NVLinkTxMBps uint64
-	NVLinkRxMBps uint64
-}
-
 // Collector wraps NVML to collect GPU metrics.
 type Collector struct {
 	logger *zap.Logger
 	mu     sync.Mutex
 }
 
-// NewCollector creates a new GPU metrics collector.
+// NewCollector initialises NVML and returns a Collector.
+// It returns an error if the NVIDIA driver (libnvidia-ml.so) is not present.
+// Use `go build -tags mock` to get a zero-dependency build for local development.
 func NewCollector(logger *zap.Logger) (*Collector, error) {
 	ret := nvml.Init()
 	if ret != nvml.SUCCESS {

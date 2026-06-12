@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" font-family="'Segoe UI', -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="gpuGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#16213e;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="kedaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f3460;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#16213e;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="podGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1b4332;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#081c15;stop-opacity:1"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#326CE5"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#10B981"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#EF4444"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#F59E0B"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="520" rx="12" fill="#0d1117"/>
+
+  <!-- Title -->
+  <text x="550" y="35" text-anchor="middle" fill="#e6edf3" font-size="20" font-weight="700">keda-gpu-scaler — Architecture</text>
+  <text x="550" y="55" text-anchor="middle" fill="#8b949e" font-size="12">Direct NVML → KEDA gRPC External Scaler</text>
+
+  <!-- ===== GPU NODE BOX ===== -->
+  <rect x="30" y="75" width="310" height="240" rx="10" fill="url(#gpuGrad)" stroke="#30363d" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="185" y="100" text-anchor="middle" fill="#F59E0B" font-size="13" font-weight="600">GPU Node (DaemonSet)</text>
+
+  <!-- keda-gpu-scaler box -->
+  <rect x="50" y="115" width="180" height="80" rx="6" fill="#161b22" stroke="#326CE5" stroke-width="1.5"/>
+  <text x="140" y="140" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="600">keda-gpu-scaler</text>
+  <text x="140" y="158" text-anchor="middle" fill="#8b949e" font-size="10">gRPC :6000</text>
+  <text x="140" y="173" text-anchor="middle" fill="#8b949e" font-size="10">:9090/metrics (opt)</text>
+
+  <!-- GPU hardware box -->
+  <rect x="50" y="210" width="270" height="90" rx="6" fill="#161b22" stroke="#F59E0B" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- GPU cards -->
+  <rect x="62" y="222" width="55" height="35" rx="4" fill="#1c2333" stroke="#F59E0B" stroke-width="1"/>
+  <text x="89" y="237" text-anchor="middle" fill="#F59E0B" font-size="8" font-weight="600">GPU 0</text>
+  <text x="89" y="250" text-anchor="middle" fill="#8b949e" font-size="7">92% util</text>
+
+  <rect x="125" y="222" width="55" height="35" rx="4" fill="#1c2333" stroke="#F59E0B" stroke-width="1"/>
+  <text x="152" y="237" text-anchor="middle" fill="#F59E0B" font-size="8" font-weight="600">GPU 1</text>
+  <text x="152" y="250" text-anchor="middle" fill="#8b949e" font-size="7">78% util</text>
+
+  <rect x="188" y="222" width="55" height="35" rx="4" fill="#1c2333" stroke="#F59E0B" stroke-width="1"/>
+  <text x="215" y="237" text-anchor="middle" fill="#F59E0B" font-size="8" font-weight="600">GPU 2</text>
+  <text x="215" y="250" text-anchor="middle" fill="#8b949e" font-size="7">85% util</text>
+
+  <rect x="251" y="222" width="55" height="35" rx="4" fill="#1c2333" stroke="#F59E0B" stroke-width="1"/>
+  <text x="278" y="237" text-anchor="middle" fill="#F59E0B" font-size="8" font-weight="600">GPU 3</text>
+  <text x="278" y="250" text-anchor="middle" fill="#8b949e" font-size="7">45% util</text>
+
+  <text x="185" y="290" text-anchor="middle" fill="#8b949e" font-size="9">NVIDIA NVML · libnvidia-ml.so · A100 / H100 / L40S</text>
+
+  <!-- NVML arrow (GPU → scaler) -->
+  <line x1="185" y1="210" x2="185" y2="195" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#arrowOrange)"/>
+  <text x="210" y="207" fill="#F59E0B" font-size="8">NVML</text>
+
+  <!-- ===== gRPC ARROW ===== -->
+  <line x1="340" y1="155" x2="430" y2="155" stroke="#326CE5" stroke-width="2.5" stroke-dasharray="8,4" marker-end="url(#arrowBlue)"/>
+  <text x="385" y="145" text-anchor="middle" fill="#326CE5" font-size="11" font-weight="600">gRPC</text>
+  <text x="385" y="172" text-anchor="middle" fill="#8b949e" font-size="9">sub-second</text>
+
+  <!-- ===== KEDA BOX ===== -->
+  <rect x="440" y="75" width="260" height="180" rx="10" fill="url(#kedaGrad)" stroke="#30363d" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="570" y="100" text-anchor="middle" fill="#326CE5" font-size="13" font-weight="600">KEDA Operator</text>
+
+  <!-- External Scaler -->
+  <rect x="460" y="115" width="160" height="50" rx="6" fill="#161b22" stroke="#326CE5" stroke-width="1.5"/>
+  <text x="540" y="138" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="600">External Scaler</text>
+  <text x="540" y="153" text-anchor="middle" fill="#8b949e" font-size="9">trigger evaluation</text>
+
+  <!-- Decision -->
+  <rect x="460" y="180" width="220" height="30" rx="4" fill="#1c2333" stroke="#F59E0B" stroke-width="1"/>
+  <text x="570" y="200" text-anchor="middle" fill="#F59E0B" font-size="10">GPU util 92% > target 80% → Scale Up</text>
+
+  <!-- HPA arrow -->
+  <text x="570" y="240" text-anchor="middle" fill="#8b949e" font-size="9">↓ HPA scaling decision</text>
+
+  <!-- ===== PODS BOX ===== -->
+  <rect x="770" y="75" width="300" height="240" rx="10" fill="url(#podGrad)" stroke="#30363d" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="920" y="100" text-anchor="middle" fill="#10B981" font-size="13" font-weight="600">Workload Pods</text>
+
+  <!-- Arrow KEDA → Pods -->
+  <line x1="700" y1="155" x2="765" y2="155" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+  <text x="733" y="145" text-anchor="middle" fill="#10B981" font-size="10" font-weight="600">Scale</text>
+
+  <!-- Pod replicas -->
+  <rect x="790" y="115" width="80" height="40" rx="5" fill="#161b22" stroke="#10B981" stroke-width="1.5"/>
+  <text x="830" y="133" text-anchor="middle" fill="#10B981" font-size="9" font-weight="600">vLLM Pod 1</text>
+  <text x="830" y="148" text-anchor="middle" fill="#8b949e" font-size="8">🟢 GPU 0</text>
+
+  <rect x="790" y="163" width="80" height="40" rx="5" fill="#161b22" stroke="#10B981" stroke-width="1.5"/>
+  <text x="830" y="181" text-anchor="middle" fill="#10B981" font-size="9" font-weight="600">vLLM Pod 2</text>
+  <text x="830" y="196" text-anchor="middle" fill="#8b949e" font-size="8">🟢 GPU 1</text>
+
+  <rect x="790" y="211" width="80" height="40" rx="5" fill="#161b22" stroke="#10B981" stroke-width="1.5"/>
+  <text x="830" y="229" text-anchor="middle" fill="#10B981" font-size="9" font-weight="600">vLLM Pod 3</text>
+  <text x="830" y="244" text-anchor="middle" fill="#8b949e" font-size="8">🟢 GPU 2</text>
+
+  <!-- Scaling indicator -->
+  <rect x="885" y="115" width="80" height="40" rx="5" fill="#161b22" stroke="#10B981" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="925" y="133" text-anchor="middle" fill="#10B981" font-size="9" font-weight="600">Pod 4</text>
+  <text x="925" y="148" text-anchor="middle" fill="#6b7280" font-size="8">scaling up...</text>
+
+  <rect x="885" y="163" width="80" height="40" rx="5" fill="#161b22" stroke="#10B981" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="925" y="181" text-anchor="middle" fill="#10B981" font-size="9" font-weight="600">Pod 5</text>
+  <text x="925" y="196" text-anchor="middle" fill="#6b7280" font-size="8">scaling up...</text>
+
+  <text x="920" y="280" text-anchor="middle" fill="#8b949e" font-size="10">3 → 5 replicas</text>
+
+  <!-- ===== COMPARISON SECTION ===== -->
+  <rect x="30" y="340" width="1040" height="160" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+
+  <text x="550" y="368" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="700">Why This Matters</text>
+
+  <!-- Traditional (crossed out) -->
+  <rect x="50" y="385" width="1000" height="45" rx="6" fill="#1c1c1c" stroke="#EF4444" stroke-width="1" opacity="0.7"/>
+  <text x="70" y="400" fill="#EF4444" font-size="10" font-weight="700">❌ TRADITIONAL</text>
+
+  <rect x="200" y="390" width="90" height="30" rx="4" fill="#2d1515" stroke="#EF4444" stroke-width="1"/>
+  <text x="245" y="409" text-anchor="middle" fill="#f87171" font-size="9">dcgm-exporter</text>
+
+  <line x1="290" y1="405" x2="320" y2="405" stroke="#EF4444" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+
+  <rect x="325" y="390" width="80" height="30" rx="4" fill="#2d1515" stroke="#EF4444" stroke-width="1"/>
+  <text x="365" y="409" text-anchor="middle" fill="#f87171" font-size="9">Prometheus</text>
+
+  <line x1="405" y1="405" x2="435" y2="405" stroke="#EF4444" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+
+  <rect x="440" y="390" width="70" height="30" rx="4" fill="#2d1515" stroke="#EF4444" stroke-width="1"/>
+  <text x="475" y="409" text-anchor="middle" fill="#f87171" font-size="9">PromQL</text>
+
+  <line x1="510" y1="405" x2="540" y2="405" stroke="#EF4444" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+
+  <rect x="545" y="390" width="100" height="30" rx="4" fill="#2d1515" stroke="#EF4444" stroke-width="1"/>
+  <text x="595" y="409" text-anchor="middle" fill="#f87171" font-size="9">KEDA Prom trigger</text>
+
+  <line x1="645" y1="405" x2="675" y2="405" stroke="#EF4444" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+
+  <rect x="680" y="390" width="50" height="30" rx="4" fill="#2d1515" stroke="#EF4444" stroke-width="1"/>
+  <text x="705" y="409" text-anchor="middle" fill="#f87171" font-size="9">HPA</text>
+
+  <text x="800" y="409" fill="#EF4444" font-size="10" font-weight="600">5 components · 15-30s delay</text>
+
+  <!-- Cross-out line -->
+  <line x1="195" y1="405" x2="735" y2="405" stroke="#EF4444" stroke-width="2" opacity="0.5"/>
+
+  <!-- Direct path -->
+  <rect x="50" y="440" width="1000" height="45" rx="6" fill="#0a1f0a" stroke="#10B981" stroke-width="1.5"/>
+  <text x="70" y="455" fill="#10B981" font-size="10" font-weight="700">✅ DIRECT</text>
+
+  <rect x="200" y="445" width="120" height="30" rx="4" fill="#132f1a" stroke="#10B981" stroke-width="1.5"/>
+  <text x="260" y="464" text-anchor="middle" fill="#34d399" font-size="10" font-weight="600">keda-gpu-scaler</text>
+
+  <line x1="320" y1="460" x2="380" y2="460" stroke="#10B981" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="350" y="452" text-anchor="middle" fill="#10B981" font-size="8">gRPC</text>
+
+  <rect x="385" y="445" width="120" height="30" rx="4" fill="#132f1a" stroke="#10B981" stroke-width="1.5"/>
+  <text x="445" y="464" text-anchor="middle" fill="#34d399" font-size="10" font-weight="600">KEDA Ext. Scaler</text>
+
+  <line x1="505" y1="460" x2="545" y2="460" stroke="#10B981" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+  <rect x="550" y="445" width="50" height="30" rx="4" fill="#132f1a" stroke="#10B981" stroke-width="1.5"/>
+  <text x="575" y="464" text-anchor="middle" fill="#34d399" font-size="10" font-weight="600">HPA</text>
+
+  <text x="800" y="464" fill="#10B981" font-size="10" font-weight="600">2 components · sub-second metrics</text>
+</svg>

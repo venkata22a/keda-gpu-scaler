@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_REPO: ghcr.io/pmady/keda-gpu-scaler
+
+jobs:
+  # Build multi-arch images and push to GHCR on tag push.
+  images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_REPO }}:${{ github.ref_name }}
+            ${{ env.IMAGE_REPO }}:latest
+
+  # Build release binaries (amd64 + arm64) and publish a GitHub Release.
+  release:
+    runs-on: ubuntu-latest
+    needs: [images]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          go-version: '1.25'
+
+      - name: Install cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc gcc-aarch64-linux-gnu
+
+      # The scaler links NVIDIA's NVML (libnvidia-ml.so) at runtime, so the
+      # binaries require CGO. They will only run on hosts that have the NVIDIA
+      # driver (and therefore libnvidia-ml.so) installed.
+      - name: Build release binaries
+        run: |
+          set -euo pipefail
+          build() {
+            local arch="$1" cc="$2"
+            local out="dist/${arch}"
+            mkdir -p "${out}"
+            CGO_ENABLED=1 GOOS=linux GOARCH="${arch}" CC="${cc}" \
+              go build -o "${out}/keda-gpu-scaler" ./cmd/keda-gpu-scaler/
+            CGO_ENABLED=1 GOOS=linux GOARCH="${arch}" CC="${cc}" \
+              go build -o "${out}/gpu-metrics" ./cmd/gpu-metrics/
+            tar -czf "keda-gpu-scaler_${GITHUB_REF_NAME}_linux_${arch}.tar.gz" \
+              -C "${out}" keda-gpu-scaler gpu-metrics
+          }
+          build amd64 gcc
+          build arm64 aarch64-linux-gnu-gcc
+
+      - name: Create GitHub Release with changelog and binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            keda-gpu-scaler_*_linux_*.tar.gz
