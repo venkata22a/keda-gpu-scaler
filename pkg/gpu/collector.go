@@ -16,30 +16,8 @@ limitations under the License.
 
 package gpu
 
-// Metrics holds a snapshot of GPU metrics for a single device.
-// It is defined here (no build tag) so it is available in both real
-// and mock builds.
-type Metrics struct {
-	Index              int
-	UUID               string
-	Name               string
-	GPUUtilization     uint32 // percentage 0-100
-	MemoryUtilization  uint32 // percentage 0-100
-	MemoryUsedMiB      uint64
-	MemoryTotalMiB     uint64
-	TemperatureCelsius uint32
-	PowerDrawWatts     uint32
-	PowerLimitWatts    uint32
-	// PCIe throughput
-	PCIeTxKBps uint32
-	PCIeRxKBps uint32
-	// NVLink throughput
-	NVLinkTxMBps uint64
-	NVLinkRxMBps uint64
-}
-
 // MetricsCollector is the interface for collecting GPU metrics.
-// The real implementation uses NVML; the mock build and tests use MockCollector.
+// The real implementation uses NVML; tests can inject a mock.
 type MetricsCollector interface {
 	CollectAll() ([]Metrics, error)
 	CollectDevice(index int) (Metrics, error)

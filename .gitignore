@@ -9,5 +9,3 @@ promotion/
 dev-server/
 Dockerfile.dev
 terraform/
-# Local mock development scripts — never committed
-dev/

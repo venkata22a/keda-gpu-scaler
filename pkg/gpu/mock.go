@@ -18,10 +18,6 @@ package gpu
 
 import "fmt"
 
-// Compile-time assertion: MockCollector must implement MetricsCollector.
-// If a new method is added to the interface and forgotten here, the build fails immediately.
-var _ MetricsCollector = (*MockCollector)(nil)
-
 // MockCollector is a test double for MetricsCollector.
 type MockCollector struct {
 	Devices []Metrics

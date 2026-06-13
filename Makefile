@@ -1,4 +1,4 @@
-.PHONY: build proto test test-e2e lint clean docker-build docker-push docker-release deploy undeploy helm-lint helm-template helm-test mock-build mock-test mock-slurm mock-flux mock-keda help
+.PHONY: build proto test test-e2e lint clean docker-build docker-push docker-release deploy undeploy helm-lint helm-template helm-test mock-build mock-test mock-slurm mock-flux mock-k8s mock-keda help
 
 BINARY_NAME := keda-gpu-scaler
 IMAGE_REPO := ghcr.io/pmady/keda-gpu-scaler
@@ -67,7 +67,6 @@ helm-test: ## Validate Helm chart renders correctly with default and custom valu
 	helm template keda-gpu-scaler deploy/helm/keda-gpu-scaler --set grpc.port=50051 --set logLevel=debug > /dev/null
 	@echo "Helm chart validation passed"
 
-# ──────────────────────────────────────────────────────────────────────────────
 # Local mock development — no NVIDIA driver or CGO required
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -75,7 +74,7 @@ mock-build: ## Build mock binaries (no CGO, no NVIDIA driver needed — uses syn
 	CGO_ENABLED=0 go build -tags mock -o bin/gpu-metrics ./cmd/gpu-metrics/
 	CGO_ENABLED=0 go build -tags mock -o bin/keda-gpu-scaler ./cmd/keda-gpu-scaler/
 	@echo "Mock binaries built: bin/gpu-metrics, bin/keda-gpu-scaler"
-	@echo "Run dev/mock-slurm.sh, dev/mock-flux.sh, or dev/mock-keda.sh to test"
+	@echo "Run dev/mock-slurm.sh, dev/mock-flux.sh, dev/mock-k8s.sh, or dev/mock-keda.sh to test"
 
 mock-test: ## Run unit tests with mock build tag (no CGO needed)
 	go test -tags mock -v -race ./pkg/...
@@ -85,6 +84,9 @@ mock-slurm: mock-build ## Build mock binaries and run SLURM simulation
 
 mock-flux: mock-build ## Build mock binaries and run Flux simulation
 	@bash dev/mock-flux.sh
+
+mock-k8s: mock-build ## Build mock binaries and run Kubernetes pod simulation
+	@bash dev/mock-k8s.sh
 
 mock-keda: mock-build ## Build mock binaries and start mock KEDA gRPC server
 	@bash dev/mock-keda.sh

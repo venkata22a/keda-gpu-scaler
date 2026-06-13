@@ -281,29 +281,25 @@ make deploy
 
 ### Standalone GPU Metrics CLI
 
-Collect GPU metrics without Kubernetes — works on bare metal, SLURM jobs, Flux jobs, and Singularity containers.
+Collect GPU metrics without Kubernetes — works on bare metal, SLURM jobs, Flux jobs, Kubernetes pods, and Singularity containers. The same binary, the same JSON schema, every environment.
 
 ```bash
-gpu-metrics                       # one-shot table output
-gpu-metrics --format json         # JSON for scripting
+gpu-metrics                       # one-shot table output (auto-detects environment)
+gpu-metrics --format json         # unified JSON schema across all environments
 gpu-metrics --format csv          # CSV for analysis
 gpu-metrics --interval 5s         # continuous collection
 gpu-metrics --device 0 --quiet    # single GPU, no logs
+
+# Explicit environment selection
+gpu-metrics --env slurm           # SLURM job context
+gpu-metrics --env flux            # Flux job context
+gpu-metrics --env k8s             # Kubernetes pod context (Downward API)
+gpu-metrics --env standalone      # no scheduler context
 ```
 
-**SLURM** — auto-detected when `SLURM_JOB_ID` is set. Collects only the GPUs assigned to your job step:
+The `--env=auto` default detects the environment from well-known variables (`SLURM_JOB_ID`, `FLUX_JOB_ID`, `KUBERNETES_SERVICE_HOST`) so `sbatch` and `flux run` users get the right context with no extra flags.
 
-```bash
-srun --gres=gpu:2 gpu-metrics --format json
-```
-
-**Flux** — auto-detected when `FLUX_JOB_ID` is set. Collects only the GPUs in `CUDA_VISIBLE_DEVICES`:
-
-```bash
-flux run -N1 -g2 gpu-metrics --format json
-```
-
-See **[HPC Integration](docs/hpc.md)** for SLURM/Flux usage, CSV context columns, and Singularity examples.
+See [docs/cross-env-comparison.md](docs/cross-env-comparison.md) for side-by-side JSON examples and `jq` comparison recipes.
 
 Or build the Docker image directly:
 
@@ -332,7 +328,6 @@ docker push your-registry/keda-gpu-scaler:v0.1.0
 
 - **[Design Document](docs/DESIGN.md)** — Architecture decisions, gRPC interface, scaling profiles, testing strategy
 - **[Migration Guide](docs/MIGRATION.md)** — Replace dcgm-exporter + Prometheus with keda-gpu-scaler
-- **[HPC Integration](docs/hpc.md)** — SLURM and Flux workload manager support
 - **[FAQ](docs/FAQ.md)** — Common questions about GPU scaling, MIG, multi-GPU, scale-to-zero
 - **[Changelog](CHANGELOG.md)** — Release history
 
@@ -364,7 +359,7 @@ Using keda-gpu-scaler? Add your organization to [ADOPTERS.md](ADOPTERS.md).
 
 - [x] SLURM workload manager integration ([#52](https://github.com/pmady/keda-gpu-scaler/issues/52))
 - [x] Flux workload manager integration ([#53](https://github.com/pmady/keda-gpu-scaler/issues/53))
-- [ ] Cross-environment GPU metrics parity — K8s, SLURM, Flux ([#54](https://github.com/pmady/keda-gpu-scaler/issues/54))
+- [x] Cross-environment GPU metrics parity — K8s, SLURM, Flux, unified `--env` flag and JSON schema ([#54](https://github.com/pmady/keda-gpu-scaler/issues/54))
 - [ ] NVIDIA collaboration for cross-platform metrics
 
 ### Future
