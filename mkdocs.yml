@@ -32,9 +32,10 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Architecture: DESIGN.md
-  - Migration Guide: MIGRATION.md
   - Configuration: configuration.md
   - HPC Integration: hpc.md
+  - Demo: demo-script.md
+  - Migration Guide: MIGRATION.md
   - FAQ: FAQ.md
   - Changelog: changelog.md
   - Contributing: contributing.md

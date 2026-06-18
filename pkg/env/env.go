@@ -44,7 +44,7 @@ type Context struct {
 	Orchestrator string `json:"orchestrator"`
 	NodeName     string `json:"node,omitempty"`
 	JobID        string `json:"job_id,omitempty"`
-	TaskRank     int    `json:"task_rank,omitempty"`
+	TaskRank     int    `json:"task_rank"` // no omitempty: rank 0 is valid (first task in a job)
 
 	// Kubernetes-specific (set via Downward API env vars)
 	PodName   string `json:"pod_name,omitempty"`

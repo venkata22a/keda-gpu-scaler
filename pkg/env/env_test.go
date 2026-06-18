@@ -17,7 +17,9 @@ limitations under the License.
 package env
 
 import (
+	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -436,6 +438,65 @@ func TestContextHeaderLength(t *testing.T) {
 		if got := len(ctx.Header()); got != 4 {
 			t.Errorf("Header() for %q has %d columns, want 4", orch, got)
 		}
+	}
+}
+
+// --- JSON serialization ---
+
+// TestContextJSON_taskRankZeroPresent is the regression test for the omitempty
+// bug: TaskRank=0 (first task in a job) must appear in the JSON output.
+// With `json:"task_rank,omitempty"` rank 0 was silently dropped.
+func TestContextJSON_taskRankZeroPresent(t *testing.T) {
+	ctx := Context{
+		Orchestrator: "slurm",
+		NodeName:     "node01",
+		JobID:        "42",
+		TaskRank:     0, // first task — must not be omitted
+	}
+
+	data, err := json.Marshal(ctx)
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+
+	if !strings.Contains(string(data), `"task_rank":0`) {
+		t.Errorf("JSON output missing task_rank=0; got: %s", data)
+	}
+}
+
+func TestContextJSON_taskRankNonZeroPresent(t *testing.T) {
+	ctx := Context{
+		Orchestrator: "slurm",
+		NodeName:     "node01",
+		JobID:        "42",
+		TaskRank:     7,
+	}
+
+	data, err := json.Marshal(ctx)
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+
+	if !strings.Contains(string(data), `"task_rank":7`) {
+		t.Errorf("JSON output missing task_rank=7; got: %s", data)
+	}
+}
+
+func TestContextJSON_standaloneTaskRankZero(t *testing.T) {
+	// Standalone has no job, so TaskRank is always 0. Verify it still appears
+	// in JSON (no omitempty suppression).
+	ctx := Context{
+		Orchestrator: "standalone",
+		NodeName:     "my-box",
+	}
+
+	data, err := json.Marshal(ctx)
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+
+	if !strings.Contains(string(data), `"task_rank":0`) {
+		t.Errorf("JSON output missing task_rank=0 for standalone; got: %s", data)
 	}
 }
 
